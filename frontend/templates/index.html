@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transport Recommendation</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        #map { height: 600px; width: 100%; }
+        #info { margin-top: 15px; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <h1>Choisissez votre trajet</h1>
+    <div id="map"></div>
+    <button id="sendBtn" disabled>Calculer le trajet</button>
+    <div id="info"></div>
+
+    <script>
+        var map = L.map('map').setView([33.5731, -7.5898], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        var markers = [];
+        var routeLayer = null;
+
+        function onMapClick(e) {
+            if (markers.length >= 2) {
+                markers.forEach(m => map.removeLayer(m));
+                markers = [];
+                if (routeLayer) {
+                    map.removeLayer(routeLayer);
+                    routeLayer = null;
+                }
+                document.getElementById('info').innerHTML = "";
+                document.getElementById('sendBtn').disabled = true;
+            }
+            var marker = L.marker(e.latlng).addTo(map);
+            markers.push(marker);
+
+            if (markers.length === 2) {
+                document.getElementById('sendBtn').disabled = false;
+            }
+        }
+
+        map.on('click', onMapClick);
+
+        document.getElementById('sendBtn').addEventListener('click', function() {
+            if (markers.length !== 2) {
+                alert("Veuillez sélectionner deux points sur la carte.");
+                return;
+            }
+
+            var start = markers[0].getLatLng();
+            var end = markers[1].getLatLng();
+
+            fetch('/calculate_route', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    start_lat: start.lat,
+                    start_lng: start.lng,
+                    end_lat: end.lat,
+                    end_lng: end.lng
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (routeLayer) {
+                    map.removeLayer(routeLayer);
+                }
+                // Afficher la route
+                routeLayer = L.polyline(data.path, {color: 'blue'}).addTo(map);
+                map.fitBounds(routeLayer.getBounds());
+
+                // Afficher info transport et distance
+                document.getElementById('info').innerHTML = `
+                    <b>Moyen de transport recommandé :</b> ${data.transport_mode}<br/>
+                    <b>Distance estimée :</b> ${data.distance ? data.distance.toFixed(2) + ' km' : 'N/A'}
+                `;
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erreur lors du calcul du trajet.");
+            });
+        });
+    </script>
+</body>
+</html>
