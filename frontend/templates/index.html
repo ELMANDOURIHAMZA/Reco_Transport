@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <title>Transport Recommendation</title>
     <meta charset="utf-8" />
@@ -7,17 +7,495 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        #map { height: 600px; width: 100%; }
-        #info { margin-top: 15px; font-size: 1.2em; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: rgba(45, 55, 72, 0.3);
+            border-radius: 16px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            padding: 2.5rem 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .floating-icons {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .floating-icon {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.1);
+            animation: float 6s infinite;
+            opacity: 0;
+        }
+
+        .floating-icon:nth-child(1) {
+            top: 20%;
+            left: 10%;
+            font-size: 24px;
+            animation-delay: 0s;
+        }
+
+        .floating-icon:nth-child(2) {
+            top: 60%;
+            left: 15%;
+            font-size: 18px;
+            animation-delay: 2s;
+        }
+
+        .floating-icon:nth-child(3) {
+            top: 25%;
+            right: 15%;
+            font-size: 20px;
+            animation-delay: 1s;
+        }
+
+        .floating-icon:nth-child(4) {
+            top: 65%;
+            right: 10%;
+            font-size: 22px;
+            animation-delay: 3s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(20px) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.7;
+            }
+            80% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-20px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            background: rgba(45, 55, 72, 0.3);
+            padding: 2rem;
+            border-radius: 16px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            position: relative;
+            display: inline-block;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            font-weight: 400;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .header-icons {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-icon {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            transition: transform 0.3s ease;
+        }
+
+        .header-icon:hover {
+            transform: translateY(-2px);
+        }
+
+        .header-icon i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .header-icon:hover i {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .map-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 4px;
+        }
+
+        #map { 
+            height: 600px; 
+            width: 100%;
+            z-index: 1;
+            border-radius: 8px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #sendBtn {
+            background-color: rgba(66, 153, 225, 0.8);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(4px);
+        }
+
+        #sendBtn:hover:not(:disabled) {
+            background-color: rgba(66, 153, 225, 1);
+            transform: translateY(-1px);
+        }
+
+        #sendBtn:disabled {
+            background-color: rgba(203, 213, 224, 0.4);
+            cursor: not-allowed;
+        }
+
+        #resetBtn {
+            background-color: rgba(229, 62, 62, 0.8);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(4px);
+        }
+
+        #resetBtn:hover {
+            background-color: rgba(229, 62, 62, 1);
+            transform: translateY(-1px);
+        }
+
+        #info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            display: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+        }
+
+        #info.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1.5rem;
+            background: rgba(45, 55, 72, 0.3);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        .transport-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #4299e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 80px;
+            width: 80px;
+            background: rgba(66, 153, 225, 0.1);
+            border-radius: 50%;
+            margin: 0 auto 1rem auto;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .transport-icon i {
+            filter: drop-shadow(0 0 8px rgba(66, 153, 225, 0.3));
+            font-size: 2.5rem;
+            line-height: 1;
+            width: auto;
+            height: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .transport-icon.active {
+            animation: scaleIn 0.3s ease-out forwards;
+        }
+
+        .info-label {
+            color: #a0aec0;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #e2e8f0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3182ce;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 2rem 1rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+
+            .header-icons {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: center;
+            }
+
+            .container {
+                padding: 10px;
+                margin: 10px;
+                border-radius: 12px;
+            }
+
+            #map {
+                height: 400px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            #sendBtn, #resetBtn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Choisissez votre trajet</h1>
-    <div id="map"></div>
-    <button id="sendBtn" disabled>Calculer le trajet</button>
-    <div id="info"></div>
+    <div class="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <header>
+        <div class="floating-icons">
+            <i class="floating-icon fas fa-map-marker-alt"></i>
+            <i class="floating-icon fas fa-route"></i>
+            <i class="floating-icon fas fa-compass"></i>
+            <i class="floating-icon fas fa-location-dot"></i>
+        </div>
+        <div class="header-content">
+            <h1>Transport Recommendation</h1>
+            <div class="header-icons">
+                <div class="header-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Sélection intuitive des points</span>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-route"></i>
+                    <span>Calcul intelligent d'itinéraire</span>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-clock"></i>
+                    <span>Résultats instantanés</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+
+        <div class="controls">
+            <button id="sendBtn" disabled>
+                <i class="fas fa-route"></i>
+                Calculer le trajet
+            </button>
+            <button id="resetBtn">
+                <i class="fas fa-redo"></i>
+                Réinitialiser
+            </button>
+        </div>
+
+        <div id="info">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="transport-icon">
+                        <i class="fas fa-question"></i>
+                    </div>
+                    <span class="info-label">Moyen de transport recommandé</span>
+                    <span class="info-value" id="transport-mode">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Distance estimée</span>
+                    <span class="info-value" id="distance">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         var map = L.map('map').setView([33.5731, -7.5898], 13);
@@ -28,19 +506,41 @@
 
         var markers = [];
         var routeLayer = null;
+        const loadingElement = document.querySelector('.loading');
+        const infoElement = document.getElementById('info');
+
+        function showLoading() {
+            loadingElement.classList.add('active');
+        }
+
+        function hideLoading() {
+            loadingElement.classList.remove('active');
+        }
+
+        function clearMap() {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            if (routeLayer) {
+                map.removeLayer(routeLayer);
+                routeLayer = null;
+            }
+            infoElement.classList.remove('active');
+            document.getElementById('sendBtn').disabled = true;
+        }
 
         function onMapClick(e) {
             if (markers.length >= 2) {
-                markers.forEach(m => map.removeLayer(m));
-                markers = [];
-                if (routeLayer) {
-                    map.removeLayer(routeLayer);
-                    routeLayer = null;
-                }
-                document.getElementById('info').innerHTML = "";
-                document.getElementById('sendBtn').disabled = true;
+                clearMap();
             }
-            var marker = L.marker(e.latlng).addTo(map);
+            
+            const markerIcon = L.divIcon({
+                html: `<i class="fas fa-map-marker-alt" style="color: ${markers.length === 0 ? '#38a169' : '#e53e3e'}; font-size: 24px;"></i>`,
+                className: 'custom-marker',
+                iconSize: [24, 24],
+                iconAnchor: [12, 24]
+            });
+
+            var marker = L.marker(e.latlng, { icon: markerIcon }).addTo(map);
             markers.push(marker);
 
             if (markers.length === 2) {
@@ -50,6 +550,26 @@
 
         map.on('click', onMapClick);
 
+        document.getElementById('resetBtn').addEventListener('click', clearMap);
+
+        function getTransportIcon(transportMode) {
+            console.log('Transport mode received:', transportMode); // Debug log
+            const mode = transportMode.toLowerCase().trim();
+            console.log('Transport mode after lowercase:', mode); // Debug log
+            
+            // More specific matching
+            if (mode.includes('bus')) return 'fa-bus';
+            if (mode.includes('taxi')) return 'fa-taxi';
+            if (mode.includes('tram')) return 'fa-train';
+            if (mode.includes('metro')) return 'fa-subway';
+            if (mode.includes('velo') || mode.includes('vélo')) return 'fa-bicycle';
+            if (mode.includes('marche') || mode.includes('pied')) return 'fa-walking';
+            
+            // If no match, log and return default
+            console.log('No match found, using default icon');
+            return 'fa-question';
+        }
+
         document.getElementById('sendBtn').addEventListener('click', function() {
             if (markers.length !== 2) {
                 alert("Veuillez sélectionner deux points sur la carte.");
@@ -58,6 +578,8 @@
 
             var start = markers[0].getLatLng();
             var end = markers[1].getLatLng();
+
+            showLoading();
 
             fetch('/calculate_route', {
                 method: 'POST',
@@ -74,19 +596,42 @@
                 if (routeLayer) {
                     map.removeLayer(routeLayer);
                 }
-                // Afficher la route
-                routeLayer = L.polyline(data.path, {color: 'blue'}).addTo(map);
-                map.fitBounds(routeLayer.getBounds());
+                
+                routeLayer = L.polyline(data.path, {
+                    color: '#4299e1',
+                    weight: 5,
+                    opacity: 0.8
+                }).addTo(map);
+                
+                map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
 
-                // Afficher info transport et distance
-                document.getElementById('info').innerHTML = `
-                    <b>Moyen de transport recommandé :</b> ${data.transport_mode}<br/>
-                    <b>Distance estimée :</b> ${data.distance ? data.distance.toFixed(2) + ' km' : 'N/A'}
-                `;
+                // Update transport mode with icon
+                const transportIcon = document.querySelector('.transport-icon i');
+                const iconClass = getTransportIcon(data.transport_mode);
+                console.log('Icon class selected:', iconClass); // Debug log
+                
+                // Remove all previous fa classes and add new ones
+                transportIcon.className = '';
+                transportIcon.classList.add('fas', iconClass);
+                
+                // Reset animation
+                const iconContainer = document.querySelector('.transport-icon');
+                iconContainer.classList.remove('active');
+                // Force reflow
+                void iconContainer.offsetWidth;
+                iconContainer.classList.add('active');
+
+                // Update text display
+                document.getElementById('transport-mode').textContent = data.transport_mode;
+                document.getElementById('distance').textContent = data.distance ? `${data.distance.toFixed(2)} km` : 'N/A';
+                infoElement.classList.add('active');
             })
             .catch(err => {
-                console.error(err);
+                console.error('Error:', err); // Debug log
                 alert("Erreur lors du calcul du trajet.");
+            })
+            .finally(() => {
+                hideLoading();
             });
         });
     </script>
