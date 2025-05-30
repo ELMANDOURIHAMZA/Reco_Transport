@@ -45,5 +45,21 @@ def calculate_route():
         'distance': distance
     })
 
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
+
+@app.route('/support')
+def support():
+    return render_template('support.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
