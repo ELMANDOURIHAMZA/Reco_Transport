@@ -11,7 +11,7 @@ class TransportServiceServicer(transport_pb2_grpc.TransportServiceServicer):
         end = (request.end_lat, request.end_lng)
 
         path, distance = calculate_route(start, end)
-        transport_mode = recommend_transport(path)
+        transport_mode = recommend_transport(distance)
 
         return transport_pb2.RouteResponse(
             path=path,

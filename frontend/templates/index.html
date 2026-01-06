@@ -2245,11 +2245,49 @@
         async function findAndDisplayHospitals(lat, lng) {
             showLoading();
             try {
-                const hospitals = await searchNearbyHospitals(lat, lng);
+                // Recherche progressive avec rayons croissants jusqu'à trouver au moins un hôpital
+                let hospitals = [];
+                const searchRadii = [10000, 20000, 30000, 50000]; // 10km, 20km, 30km, 50km
                 
+                for (const radius of searchRadii) {
+                    hospitals = await searchNearbyHospitals(lat, lng, radius);
+                    if (hospitals.length > 0) {
+                        break; // Arrêter dès qu'on trouve des hôpitaux
+                    }
+                }
+                
+                // Si toujours aucun hôpital, chercher dans toute la région de Casablanca
+                if (hospitals.length === 0) {
+                    // Recherche dans un rayon très large centré sur Casablanca
+                    const casablancaCenter = { lat: 33.5731, lng: -7.5898 };
+                    hospitals = await searchNearbyHospitals(casablancaCenter.lat, casablancaCenter.lng, 50000);
+                    
+                    // Recalculer les distances depuis la position de l'utilisateur
+                    if (hospitals.length > 0) {
+                        hospitals = hospitals.map(hospital => {
+                            hospital.distance = calculateDistance(lat, lng, hospital.lat, hospital.lng);
+                            return hospital;
+                        }).sort((a, b) => a.distance - b.distance);
+                    }
+                }
+                
+                // Toujours afficher au moins le plus proche, même s'il est loin
                 if (hospitals.length === 0) {
                     hideLoading();
-                    alert("Aucun hôpital trouvé dans les environs. Essayez d'augmenter la zone de recherche.");
+                    // En dernier recours, essayer une recherche encore plus large
+                    hospitals = await searchNearbyHospitals(33.5731, -7.5898, 100000);
+                    if (hospitals.length > 0) {
+                        hospitals = hospitals.map(hospital => {
+                            hospital.distance = calculateDistance(lat, lng, hospital.lat, hospital.lng);
+                            return hospital;
+                        }).sort((a, b) => a.distance - b.distance);
+                    }
+                }
+                
+                // Si vraiment aucun hôpital trouvé (très rare), on ne peut rien faire
+                if (hospitals.length === 0) {
+                    hideLoading();
+                    console.error("Impossible de trouver des hôpitaux dans la base de données OpenStreetMap");
                     return;
                 }
 
