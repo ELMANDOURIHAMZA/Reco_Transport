@@ -84,8 +84,8 @@ This application uses a microservices architecture for scalability and maintaina
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/zahdineamine2003/Transportation_recommendation.git
-cd Transportation_recommendation
+git clone https://github.com/ELMANDOURIHAMZA/Reco_Transport.git
+cd Reco_Transport
 ```
 
 ### Step 2: Create Virtual Environment
